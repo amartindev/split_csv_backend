@@ -34,6 +34,11 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     try {
         deleteOldFiles(); // Elimina los archivos previos al recibir un nuevo archivo
 
+        // Verifica si el archivo fue subido
+        if (!req.file) {
+            return res.status(400).send({ error: 'No file uploaded' });
+        }
+
         const filePath = path.join(__dirname, req.file.path);
         const results = [];
         const rowsPerFile = parseInt(req.body.rowsPerFile, 10) - 1; // Resta 1 al número de filas por archivo
@@ -88,7 +93,7 @@ app.get('/download/:filename', (req, res) => {
 
         res.download(filePath, (err) => {
             if (err) {
-                console.error(err);
+                console.error('Error during file download:', err);
                 res.status(404).send('File not found');
             } else {
                 // Elimina el archivo después de ser descargado
