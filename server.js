@@ -11,7 +11,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-app.use(cors()); // Habilita CORS para permitir solicitudes desde el frontend
+app.use(cors({
+    origin: 'https://split-csv.netlify.app' // Permitir solicitudes desde tu frontend en Netlify
+}));
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -82,7 +84,8 @@ app.get('/download/:filename', (req, res) => {
     });
 });
 
-// Inicia el servidor en el puerto 3001
-app.listen(3001, () => {
-    console.log('Servidor iniciado en http://localhost:3001');
+// Inicia el servidor en el puerto adecuado
+const PORT = process.env.PORT || 3001; // Se asegura de que se use el puerto correcto
+app.listen(PORT, () => {
+    console.log(`Servidor iniciado en http://localhost:${PORT}`);
 });
