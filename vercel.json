@@ -9,9 +9,14 @@
     "routes": [
       {
         "src": "/upload",
+        "methods": ["POST"],
+        "dest": "/server.js"
+      },
+      {
+        "src": "/download/(.*)",
+        "methods": ["GET"],
         "dest": "/server.js"
       }
     ]
   }
-  
   

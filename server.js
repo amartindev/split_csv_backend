@@ -109,8 +109,8 @@ app.get('/download/:filename', (req, res) => {
     }
 });
 
-// Inicia el servidor en el puerto adecuado (Vercel se encarga del puerto)
-app.listen(process.env.PORT || 3000, () => {
+// Inicia el servidor sin asignar un puerto específico (Vercel gestiona el puerto automáticamente)
+app.listen(() => {
     console.log(`Servidor iniciado`);
 });
 
