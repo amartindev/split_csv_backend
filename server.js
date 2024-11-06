@@ -109,9 +109,10 @@ app.get('/download/:filename', (req, res) => {
     }
 });
 
-// Inicia el servidor sin asignar un puerto específico (Vercel gestiona el puerto automáticamente)
-app.listen(() => {
-    console.log(`Servidor iniciado`);
+// Inicia el servidor, usando el puerto de Vercel o el 3000 para desarrollo
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+    console.log(`Servidor iniciado en el puerto ${port}`);
 });
 
 export default app;
