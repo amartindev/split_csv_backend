@@ -17,14 +17,17 @@ app.use(cors({
     origin: 'https://split-csv.netlify.app', // Asegúrate de que la URL de tu frontend esté configurada correctamente
 }));
 
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: 'uploads/' }); // Utiliza la carpeta 'uploads' en la raíz
 
-// Función para eliminar archivos generados anteriormente
+// Función para eliminar archivos generados anteriormente en 'uploads'
 const deleteOldFiles = () => {
-    const files = fs.readdirSync(__dirname);
+    const files = fs.readdirSync(path.join(__dirname, 'uploads'));
     files.forEach(file => {
         if (file.startsWith('output_part_') || file.startsWith('uploads/')) {
-            fs.unlinkSync(path.join(__dirname, file));
+            const filePath = path.join(__dirname, 'uploads', file);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
         }
     });
 };
@@ -34,14 +37,13 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     try {
         deleteOldFiles(); // Elimina los archivos previos al recibir un nuevo archivo
 
-        // Verifica si el archivo fue subido
         if (!req.file) {
             return res.status(400).send({ error: 'No file uploaded' });
         }
 
-        const filePath = path.join(__dirname, req.file.path);
+        const filePath = path.join(__dirname, req.file.path); // Ruta en 'uploads'
         const results = [];
-        const rowsPerFile = parseInt(req.body.rowsPerFile, 10) - 1; // Resta 1 al número de filas por archivo
+        const rowsPerFile = parseInt(req.body.rowsPerFile, 10) - 1;
 
         fs.createReadStream(filePath)
             .pipe(csvParser())
@@ -52,11 +54,10 @@ app.post('/upload', upload.single('file'), async (req, res) => {
                 let fileIndex = 1;
                 let downloadFiles = [];
 
-                // Divide el archivo CSV en partes más pequeñas
                 while (results.length > 0) {
                     const currentChunk = results.splice(0, rowsPerFile);
                     const downloadFileName = `output_part_${fileIndex}.csv`;
-                    const outputFilePath = path.join(__dirname, downloadFileName);
+                    const outputFilePath = path.join(__dirname, 'uploads', downloadFileName);
 
                     const csvHeaders = Object.keys(currentChunk[0]).join(',') + '\n';
                     const csvData = currentChunk.map(row => Object.values(row).join(',')).join('\n');
@@ -67,8 +68,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
                     fileIndex++;
                 }
 
-                // Elimina el archivo original después de procesarlo
-                fs.unlinkSync(filePath);
+                fs.unlinkSync(filePath); // Borra el archivo original
 
                 res.send({
                     message: 'Archivo procesado y dividido correctamente',
@@ -89,25 +89,29 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 app.get('/download/:filename', (req, res) => {
     try {
         const filename = req.params.filename;
-        const filePath = path.join(__dirname, filename);
+        const filePath = path.join(__dirname, 'uploads', filename);
 
-        res.download(filePath, (err) => {
-            if (err) {
-                console.error('Error during file download:', err);
-                res.status(404).send('File not found');
-            } else {
-                // Elimina el archivo después de ser descargado
-                fs.unlinkSync(filePath);
-            }
-        });
+        if (fs.existsSync(filePath)) {
+            res.download(filePath, (err) => {
+                if (err) {
+                    console.error('Error during file download:', err);
+                    res.status(404).send('File not found');
+                } else {
+                    fs.unlinkSync(filePath); // Elimina el archivo después de ser descargado
+                }
+            });
+        } else {
+            res.status(404).send('File not found');
+        }
     } catch (error) {
         console.error('Error during file download:', error);
         res.status(500).send({ error: 'Internal Server Error' });
     }
 });
 
-// Inicia el servidor en el puerto adecuado (por defecto el puerto de Vercel)
-const PORT = process.env.PORT || 3001; // Asegúrate de que se use el puerto correcto
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`Servidor iniciado en http://localhost:${PORT}`);
 });
+
+export default app;
