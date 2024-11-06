@@ -109,9 +109,9 @@ app.get('/download/:filename', (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-    console.log(`Servidor iniciado en http://localhost:${PORT}`);
+// Inicia el servidor en el puerto adecuado (Vercel se encarga del puerto)
+app.listen(process.env.PORT || 3000, () => {
+    console.log(`Servidor iniciado`);
 });
 
 export default app;
