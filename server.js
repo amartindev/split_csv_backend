@@ -34,15 +34,15 @@ const deleteOldFiles = () => {
 
 // Ruta para recibir el archivo CSV y procesarlo
 app.post('/upload', upload.single('file'), async (req, res) => {
+    console.log('Archivo recibido:', req.file);
+    console.log('Rows per file:', req.body.rowsPerFile);
+
     try {
         deleteOldFiles(); // Elimina los archivos previos al recibir un nuevo archivo
 
         if (!req.file) {
             return res.status(400).send({ error: 'No file uploaded' });
         }
-
-        console.log('File received:', req.file);  // Verifica que el archivo llegó
-        console.log('Rows per file:', req.body.rowsPerFile); // Verifica que el valor de rowsPerFile es el esperado
 
         const filePath = path.join(__dirname, req.file.path); // Ruta en 'uploads'
         const results = [];
