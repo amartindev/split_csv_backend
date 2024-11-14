@@ -18,7 +18,9 @@ const app = express();
 // }));
 
 app.use(cors({
-    origin: '*', // Permite solicitudes desde cualquier origen
+    origin: '*', // Permite todos los orígenes
+    methods: ['GET', 'POST'], // Métodos permitidos
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token'], // Encabezados permitidos
   }));
 
 const upload = multer({ dest: 'uploads/' }); // Utiliza la carpeta 'uploads' en la raíz
