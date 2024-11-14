@@ -13,9 +13,13 @@ const __dirname = dirname(__filename);
 const app = express();
 
 // Configura CORS para permitir solicitudes desde tu frontend en Netlify
+// app.use(cors({
+//     origin: 'https://split-csv.netlify.app', // Asegúrate de que la URL de tu frontend esté configurada correctamente
+// }));
+
 app.use(cors({
-    origin: 'https://split-csv.netlify.app', // Asegúrate de que la URL de tu frontend esté configurada correctamente
-}));
+    origin: '*', // Permite solicitudes desde cualquier origen
+  }));
 
 const upload = multer({ dest: 'uploads/' }); // Utiliza la carpeta 'uploads' en la raíz
 
