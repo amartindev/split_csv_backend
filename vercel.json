@@ -16,6 +16,11 @@
         "src": "/api/download/(.*)",
         "methods": ["GET"],
         "dest": "/server.js"
+      },
+      {
+        "src": "/api/download-all",
+        "methods": ["POST"],
+        "dest": "/server.js"
       }
     ]
   }

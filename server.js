@@ -6,6 +6,7 @@ import csvParser from 'csv-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import archiver from 'archiver';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -22,6 +23,8 @@ app.use(cors({
     methods: ['GET', 'POST'], // Métodos permitidos
     allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token'], // Encabezados permitidos
   }));
+
+app.use(express.json()); // Middleware para parsear JSON
 
 const upload = multer({ dest: 'uploads/' }); // Utiliza la carpeta 'uploads' en la raíz
 
@@ -114,6 +117,65 @@ app.get('/download/:filename', (req, res) => {
         }
     } catch (error) {
         console.error('Error during file download:', error);
+        res.status(500).send({ error: 'Internal Server Error' });
+    }
+});
+
+// Ruta para descargar todos los archivos en un ZIP
+app.post('/download-all', (req, res) => {
+    try {
+        const { filenames } = req.body;
+
+        if (!filenames || !Array.isArray(filenames) || filenames.length === 0) {
+            return res.status(400).send({ error: 'No files provided' });
+        }
+
+        const zipFileName = `all_files_${Date.now()}.zip`;
+        const output = fs.createWriteStream(path.join(__dirname, 'uploads', zipFileName));
+        const archive = archiver('zip', {
+            zlib: { level: 9 } // Nivel de compresión máximo
+        });
+
+        output.on('close', () => {
+            const zipPath = path.join(__dirname, 'uploads', zipFileName);
+            res.download(zipPath, zipFileName, (err) => {
+                if (err) {
+                    console.error('Error during ZIP download:', err);
+                    res.status(500).send({ error: 'Error downloading ZIP file' });
+                } else {
+                    // Elimina el archivo ZIP después de ser descargado
+                    if (fs.existsSync(zipPath)) {
+                        fs.unlinkSync(zipPath);
+                    }
+                    // Elimina los archivos individuales después de crear el ZIP
+                    filenames.forEach(filename => {
+                        const filePath = path.join(__dirname, 'uploads', filename);
+                        if (fs.existsSync(filePath)) {
+                            fs.unlinkSync(filePath);
+                        }
+                    });
+                }
+            });
+        });
+
+        archive.on('error', (err) => {
+            console.error('Error creating ZIP:', err);
+            res.status(500).send({ error: 'Error creating ZIP file' });
+        });
+
+        archive.pipe(output);
+
+        // Agrega cada archivo al ZIP
+        filenames.forEach(filename => {
+            const filePath = path.join(__dirname, 'uploads', filename);
+            if (fs.existsSync(filePath)) {
+                archive.file(filePath, { name: filename });
+            }
+        });
+
+        archive.finalize();
+    } catch (error) {
+        console.error('Error during ZIP creation:', error);
         res.status(500).send({ error: 'Internal Server Error' });
     }
 });
